@@ -9,6 +9,11 @@
 #include "Engine/World.h"
 
 
+/*
+	화염방사기 무기 구현 
+	Overlap 방식에 나이아가라 이펙트를 추가해 구현
+*/
+
 UFireComponent_Flame::UFireComponent_Flame()
 {
 	PrimaryComponentTick.bCanEverTick = false;
@@ -20,13 +25,14 @@ void UFireComponent_Flame::BeginPlay()
 	OwnerCharacter = Cast<ADFHeroCharacter>(GetOwner());
 }
 
+// 화염방사기 활성화: 이펙트 재생 및 주기적 피해 시작
 void UFireComponent_Flame::Activate(bool bReset)
 {
 	Super::Activate(bReset);
 
 	if (!OwnerCharacter) return;
-	
-	// 🔥 나이아가라 이펙트 시작
+
+	// 나이아가라 불꽃 이펙트 시작
 	if (FlameEffect)
 	{
 		if (!FlameComp)
@@ -43,7 +49,7 @@ void UFireComponent_Flame::Activate(bool bReset)
 		}
 	}
 
-	// 🔥 타이머 시작
+	// 피해 적용 타이머 시작
 	GetWorld()->GetTimerManager().SetTimer(
 		FlameTimerHandle,
 		this,
@@ -55,6 +61,7 @@ void UFireComponent_Flame::Activate(bool bReset)
 	UE_LOG(LogTemp, Warning, TEXT("[Flame] Activated"));
 }
 
+// 화염방사기 비활성화: 타이머 및 이펙트 정지
 void UFireComponent_Flame::Deactivate()
 {
 	Super::Deactivate();
@@ -70,11 +77,12 @@ void UFireComponent_Flame::Deactivate()
 	UE_LOG(LogTemp, Warning, TEXT("[Flame] Deactivated"));
 }
 
+// 캐릭터 전방 부채꼴 영역에 주기적으로 피해 적용
 void UFireComponent_Flame::ApplyFlameDamage()
 {
 	if (!OwnerCharacter) return;
 
-	const FVector Start = OwnerCharacter->GetActorLocation();
+	const FVector Start   = OwnerCharacter->GetActorLocation();
 	const FVector Forward = OwnerCharacter->GetActorForwardVector();
 
 	TArray<FOverlapResult> Overlaps;
@@ -82,6 +90,7 @@ void UFireComponent_Flame::ApplyFlameDamage()
 	Params.AddIgnoredActor(OwnerCharacter);
 
 	const FVector Center = Start + Forward * FlameRange * 0.5f;
+
 	GetWorld()->OverlapMultiByChannel(
 		Overlaps,
 		Center,
@@ -110,6 +119,7 @@ void UFireComponent_Flame::ApplyFlameDamage()
 	}
 }
 
+// 화염방사기 업그레이드: 첫 업그레이드 시 활성화, 이후에는 피해량/간격 강화
 void UFireComponent_Flame::Upgrade()
 {
 	if (UpgradeLevel == 0)
@@ -119,9 +129,8 @@ void UFireComponent_Flame::Upgrade()
 	}
 	else
 	{
-		DamagePerTick = DamagePerTick * DamageIncreasePerUpgrade;
-		DamageInterval = DamageInterval * IntervalDecreasePerUpgrade;
+		DamagePerTick   = DamagePerTick * DamageIncreasePerUpgrade;
+		DamageInterval  = DamageInterval * IntervalDecreasePerUpgrade;
 		UpgradeLevel++;
 	}
 }
-
