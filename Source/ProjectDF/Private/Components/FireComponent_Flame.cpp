@@ -58,7 +58,6 @@ void UFireComponent_Flame::Activate(bool bReset)
 		true
 	);
 
-	UE_LOG(LogTemp, Warning, TEXT("[Flame] Activated"));
 }
 
 // 화염방사기 비활성화: 타이머 및 이펙트 정지
@@ -74,7 +73,6 @@ void UFireComponent_Flame::Deactivate()
 		FlameComp = nullptr;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("[Flame] Deactivated"));
 }
 
 // 캐릭터 전방 부채꼴 영역에 주기적으로 피해 적용
