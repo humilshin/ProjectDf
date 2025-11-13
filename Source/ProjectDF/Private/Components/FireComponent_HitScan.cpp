@@ -4,6 +4,10 @@
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
 
+/*
+	레이저 구현
+	HitScan방식과 나이아가라 Beam을 이용해 구현
+*/
 UFireComponent_HitScan::UFireComponent_HitScan()
 {
 	PrimaryComponentTick.bCanEverTick = false;
@@ -15,6 +19,7 @@ void UFireComponent_HitScan::BeginPlay()
 	OwnerCharacter = Cast<ADFHeroCharacter>(GetOwner());
 }
 
+// 레이저 어빌리티 활성화: 주기적으로 레이저 발사
 void UFireComponent_HitScan::Activate(bool bReset)
 {
 	Super::Activate(bReset);
@@ -28,16 +33,17 @@ void UFireComponent_HitScan::Activate(bool bReset)
 		true
 	);
 
-	UE_LOG(LogTemp, Warning, TEXT("[HitScan] Activated"));
 }
 
+// 레이저 어빌리티 비활성화: 타이머 정지
 void UFireComponent_HitScan::Deactivate()
 {
 	Super::Deactivate();
 	GetWorld()->GetTimerManager().ClearTimer(FireTimerHandle);
-	UE_LOG(LogTemp, Warning, TEXT("[HitScan] Deactivated"));
+
 }
 
+// 레이저 발사: 가장 가까운 적을 우선 타겟, 없으면 전방으로 발사
 void UFireComponent_HitScan::FireLaser()
 {
 	if (!HitScanClass || !OwnerCharacter || !OwnerCharacter->ProjectileSpawnPoint) return;
@@ -68,6 +74,7 @@ void UFireComponent_HitScan::FireLaser()
 	}
 }
 
+// 지정 위치 기준 가장 가까운 적 찾기
 AActor* UFireComponent_HitScan::FindNearestEnemy(const FVector& From, float MaxRange)
 {
 	TArray<AActor*> Actors;
@@ -80,7 +87,7 @@ AActor* UFireComponent_HitScan::FindNearestEnemy(const FVector& From, float MaxR
 	{
 		if (Actor == OwnerCharacter) continue;
 
-		float DistSq = FVector::DistSquared(From, Actor->GetActorLocation());
+		const float DistSq = FVector::DistSquared(From, Actor->GetActorLocation());
 		if (DistSq < MinDistSq)
 		{
 			MinDistSq = DistSq;
@@ -91,6 +98,7 @@ AActor* UFireComponent_HitScan::FindNearestEnemy(const FVector& From, float MaxR
 	return Nearest;
 }
 
+// 레이저 업그레이드: 첫 업그레이드 시 활성화, 이후에는 피해량/쿨타임 강화
 void UFireComponent_HitScan::Upgrade()
 {
 	if (UpgradeLevel == 0)
@@ -100,7 +108,7 @@ void UFireComponent_HitScan::Upgrade()
 	}
 	else
 	{
-		Damage = Damage * DamageIncreasePerUpgrade;
+		Damage       = Damage * DamageIncreasePerUpgrade;
 		FireInterval = FireInterval * IntervalDecreasePerUpgrade;
 		UpgradeLevel++;
 	}
